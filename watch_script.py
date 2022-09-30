@@ -210,7 +210,7 @@ def toogoodtogo():
                     item['msg_id'] = tg['result']['message_id']
                 except:
                     print(json.dumps(tg))
-                    print(item['image']['url'])
+                    print(item['category_picture'])
                     print(message)
                     print(traceback.format_exc())
             elif old_stock > new_stock and new_stock != 0:
@@ -222,7 +222,12 @@ def toogoodtogo():
             elif old_stock > new_stock and new_stock == 0:
                 # message = f" ⭕ Sold out! There are no more goodie bags available at {item['store_name']}."
                 # telegram_bot_sendtext(message)
-                telegram_bot_delete_message([stock['msg_id'] for stock in tgtg_in_stock if stock['id'] == item['id']][0])
+                try: 
+                    tg = telegram_bot_delete_message([stock['msg_id'] for stock in tgtg_in_stock if stock['id'] == item['id']][0])
+                except:
+                    print(f"Failed to remove message for item id: {item['id']}")
+                    print(json.dumps(tg))
+                    print(traceback.format_exc())
             else:
                 # Prepare a generic string, but with the important info
                 message = f"There was a change of number of goodie bags in stock from {old_stock} to {new_stock} at {item['store_name']}."
@@ -326,7 +331,12 @@ def foodsi():
             elif old_stock > new_stock and new_stock == 0:
                 # message = f" ⭕ Sold out! There are no more goodie bags available at {item['name']}."
                 # telegram_bot_sendtext(message)
-                telegram_bot_delete_message([stock['msg_id'] for stock in foodsi_in_stock if stock['id'] == item['id']][0])
+                try: 
+                    tg = telegram_bot_delete_message([stock['msg_id'] for stock in foodsi_in_stock if stock['id'] == item['id']][0])
+                except:
+                    print(f"Failed to remove message for item id: {item['id']}")
+                    print(json.dumps(tg))
+                    print(traceback.format_exc())
             else:
                 # Prepare a generic string, but with the important info
                 message = f"There was a change of number of goodie bags in stock from {old_stock} to {new_stock} at {item['name']}."
