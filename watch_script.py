@@ -226,7 +226,6 @@ def toogoodtogo():
                     tg = telegram_bot_delete_message([stock['msg_id'] for stock in tgtg_in_stock if stock['id'] == item['id']][0])
                 except:
                     print(f"Failed to remove message for item id: {item['id']}")
-                    print(json.dumps(tg))
                     print(traceback.format_exc())
             else:
                 # Prepare a generic string, but with the important info
@@ -335,7 +334,6 @@ def foodsi():
                     tg = telegram_bot_delete_message([stock['msg_id'] for stock in foodsi_in_stock if stock['id'] == item['id']][0])
                 except:
                     print(f"Failed to remove message for item id: {item['id']}")
-                    print(json.dumps(tg))
                     print(traceback.format_exc())
             else:
                 # Prepare a generic string, but with the important info
