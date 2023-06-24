@@ -16,14 +16,27 @@ import random
 import string
 import dateutil.parser
 
+def init_from_json(config_json):
+    global tgtg_enabled
+    try:
+        tgtg_enabled = config_json['general']['tgtg_enabled']
+    except KeyError:
+        tgtg_enabled = True
+
+    global foodsi_enabled
+    try:
+        foodsi_enabled = config_json['general']['foodsi_enabled']
+    except KeyError:
+        foodsi_enabled = True
+
+
 try:
     filename = inspect.getframeinfo(inspect.currentframe()).filename
     path = os.path.dirname(os.path.abspath(filename))
     # Load credentials from a file
     f = open(os.path.join(path, 'config.json'), mode='r+')
     config = load(f)
-    tgtg_enabled = config['general']['tgtg_enabled']
-    foodsi_enabled = config['general']['foodsi_enabled']
+    init_from_json(config)
 except FileNotFoundError:
     print("No files found for local credentials.")
     exit(1)
@@ -39,7 +52,10 @@ except KeyError:
     # print(f"Failed to obtain TGTG credentials.\nRun \"python3 {sys.argv[0]} <your_email>\" to generate TGTG credentials.")
     # exit(1)
     try:
-        email = config['general']['tgtg_email']
+        try:
+            email = config['general']['tgtg_email']
+        except KeyError:
+            email = input("Type your TooGoodToGo email address: ")
         client = TgtgClient(email=email)
         tgtg_creds = client.get_credentials()
         print(tgtg_creds)
@@ -101,6 +117,7 @@ tgtg_in_stock = list()
 foodsi_in_stock = list()
 
 
+
 def telegram_bot_sendtext(bot_message, only_to_admin=True):
     """
     Helper function: Send a message with the specified telegram bot.
@@ -138,8 +155,6 @@ def parse_tgtg_api(api_result):
     result = list()
     # Go through all stores, that are returned with the api
     for store in api_result:
-        #print("#############################################")
-        #print(store)
         current_item = dict()
         current_item['id'] = store['item']['item_id']
         current_item['store_name'] = store['store']['store_name']
@@ -152,10 +167,10 @@ def parse_tgtg_api(api_result):
         current_item['price_including_taxes'] = str(store['item']['price_including_taxes']['minor_units'])[:-(store['item']['price_including_taxes']['decimals'])] + "." + str(store['item']['price_including_taxes']['minor_units'])[-(store['item']['price_including_taxes']['decimals']):]+store['item']['price_including_taxes']['code']
         current_item['value_including_taxes'] = str(store['item']['value_including_taxes']['minor_units'])[:-(store['item']['value_including_taxes']['decimals'])] + "." + str(store['item']['value_including_taxes']['minor_units'])[-(store['item']['value_including_taxes']['decimals']):]+store['item']['value_including_taxes']['code']
         try:
-            #print("###################")
-            print(store['store']['store_time_zone'])
-            store_timezone = pytz.timezone(store['store']['store_time_zone'])
-            print(store_timezone)
+            try:
+                store_timezone = pytz.timezone(store['store']['store_time_zone'])
+            except KeyError:
+                store_timezone = None
             localPickupStart = datetime.datetime.strptime(store['pickup_interval']['start'],'%Y-%m-%dT%H:%M:%S%z').replace(tzinfo=datetime.timezone.utc).astimezone(tz=store_timezone)
             localPickupEnd = datetime.datetime.strptime(store['pickup_interval']['end'],'%Y-%m-%dT%H:%M:%S%z').replace(tzinfo=datetime.timezone.utc).astimezone(tz=store_timezone)
             current_item['pickup_start'] = maya.parse(localPickupStart).slang_date().capitalize() + " " + localPickupStart.strftime('%H:%M')
