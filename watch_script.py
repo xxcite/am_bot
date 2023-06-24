@@ -8,6 +8,7 @@ import traceback
 import json
 import maya
 import datetime
+import pytz
 import inspect
 import sys
 from urllib.parse import quote
@@ -21,6 +22,8 @@ try:
     # Load credentials from a file
     f = open(os.path.join(path, 'config.json'), mode='r+')
     config = load(f)
+    tgtg_enabled = config['general']['tgtg_enabled']
+    foodsi_enabled = config['general']['foodsi_enabled']
 except FileNotFoundError:
     print("No files found for local credentials.")
     exit(1)
@@ -36,7 +39,7 @@ except KeyError:
     # print(f"Failed to obtain TGTG credentials.\nRun \"python3 {sys.argv[0]} <your_email>\" to generate TGTG credentials.")
     # exit(1)
     try:
-        email = input("Type your TooGoodToGo email address: ")
+        email = config['general']['tgtg_email']
         client = TgtgClient(email=email)
         tgtg_creds = client.get_credentials()
         print(tgtg_creds)
@@ -135,6 +138,8 @@ def parse_tgtg_api(api_result):
     result = list()
     # Go through all stores, that are returned with the api
     for store in api_result:
+        #print("#############################################")
+        #print(store)
         current_item = dict()
         current_item['id'] = store['item']['item_id']
         current_item['store_name'] = store['store']['store_name']
@@ -147,11 +152,16 @@ def parse_tgtg_api(api_result):
         current_item['price_including_taxes'] = str(store['item']['price_including_taxes']['minor_units'])[:-(store['item']['price_including_taxes']['decimals'])] + "." + str(store['item']['price_including_taxes']['minor_units'])[-(store['item']['price_including_taxes']['decimals']):]+store['item']['price_including_taxes']['code']
         current_item['value_including_taxes'] = str(store['item']['value_including_taxes']['minor_units'])[:-(store['item']['value_including_taxes']['decimals'])] + "." + str(store['item']['value_including_taxes']['minor_units'])[-(store['item']['value_including_taxes']['decimals']):]+store['item']['value_including_taxes']['code']
         try:
-            localPickupStart = datetime.datetime.strptime(store['pickup_interval']['start'],'%Y-%m-%dT%H:%M:%S%z').replace(tzinfo=datetime.timezone.utc).astimezone(tz=None)
-            localPickupEnd = datetime.datetime.strptime(store['pickup_interval']['end'],'%Y-%m-%dT%H:%M:%S%z').replace(tzinfo=datetime.timezone.utc).astimezone(tz=None)
+            #print("###################")
+            print(store['store']['store_time_zone'])
+            store_timezone = pytz.timezone(store['store']['store_time_zone'])
+            print(store_timezone)
+            localPickupStart = datetime.datetime.strptime(store['pickup_interval']['start'],'%Y-%m-%dT%H:%M:%S%z').replace(tzinfo=datetime.timezone.utc).astimezone(tz=store_timezone)
+            localPickupEnd = datetime.datetime.strptime(store['pickup_interval']['end'],'%Y-%m-%dT%H:%M:%S%z').replace(tzinfo=datetime.timezone.utc).astimezone(tz=store_timezone)
             current_item['pickup_start'] = maya.parse(localPickupStart).slang_date().capitalize() + " " + localPickupStart.strftime('%H:%M')
             current_item['pickup_end'] = maya.parse(localPickupEnd).slang_date().capitalize() + " " + localPickupEnd.strftime('%H:%M')
         except KeyError:
+            #print(KeyError)
             current_item['pickup_start'] = None
             current_item['pickup_end'] = None
         try:
@@ -177,6 +187,10 @@ def toogoodtogo():
         radius=config['location']['range'],
         page_size=300
     )
+
+    #print("####################")
+    #print(api_response)
+    #print("####################")
 
     parsed_api = parse_tgtg_api(api_response)
 
@@ -362,8 +376,10 @@ def refresh():
     Retrieves the data from services APIs and selects the messages to send.
     """
     try:
-        toogoodtogo()
-        foodsi()
+        if tgtg_enabled:
+            toogoodtogo()
+        if foodsi_enabled:    
+            foodsi()
     except:
         print(traceback.format_exc())
         telegram_bot_sendtext("Error occured: \n```" + str(traceback.format_exc()) + "```")
