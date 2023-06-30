@@ -19,15 +19,21 @@ import dateutil.parser
 def init_from_json(config_json):
     global tgtg_enabled
     try:
-        tgtg_enabled = config_json['general']['tgtg_enabled']
+        tgtg_enabled = config_json['tgtg']['enabled']
     except KeyError:
         tgtg_enabled = True
 
     global foodsi_enabled
     try:
-        foodsi_enabled = config_json['general']['foodsi_enabled']
+        foodsi_enabled = config_json['foodsi']['enabled']
     except KeyError:
         foodsi_enabled = True
+
+    global tgtg_fav_only
+    try:
+        tgtg_fav_only = config_json['tgtg']['favorites_only']
+    except KeyError:
+        tgtg_fav_only = False
 
 
 try:
@@ -47,23 +53,23 @@ except:
 
 try:
     # Create the tgtg client with my credentials
-    tgtg_client = TgtgClient(access_token=config['tgtg']['access_token'], refresh_token=config['tgtg']['refresh_token'], user_id=config['tgtg']['user_id'], cookie=config['tgtg']['cookie'])
+    tgtg_client = TgtgClient(access_token=config['tgtg']['credentials']['access_token'], refresh_token=config['tgtg']['credentials']['refresh_token'], user_id=config['tgtg']['credentials']['user_id'], cookie=config['tgtg']['credentials']['cookie'])
 except KeyError:
     # print(f"Failed to obtain TGTG credentials.\nRun \"python3 {sys.argv[0]} <your_email>\" to generate TGTG credentials.")
     # exit(1)
     try:
         try:
-            email = config['general']['tgtg_email']
+            email = config['tgtg']['email']
         except KeyError:
             email = input("Type your TooGoodToGo email address: ")
         client = TgtgClient(email=email)
         tgtg_creds = client.get_credentials()
         print(tgtg_creds)
-        config['tgtg'] = tgtg_creds
+        config['tgtg']['credentials'] = tgtg_creds
         f.seek(0)
         json.dump(config, f, indent = 4)
         f.truncate()
-        tgtg_client = TgtgClient(access_token=config['tgtg']['access_token'], refresh_token=config['tgtg']['refresh_token'], user_id=config['tgtg']['user_id'], cookie=config['tgtg']['cookie'])
+        tgtg_client = TgtgClient(access_token=config['tgtg']['credentials']['access_token'], refresh_token=config['tgtg']['credentials']['refresh_token'], user_id=config['tgtg']['credentials']['user_id'], cookie=config['tgtg']['credentials']['cookie'])
     except:
         print(traceback.format_exc())
         exit(1)
@@ -158,6 +164,7 @@ def parse_tgtg_api(api_result):
         current_item = dict()
         current_item['id'] = store['item']['item_id']
         current_item['store_name'] = store['store']['store_name']
+        current_item['store_address'] = store['store']['store_location']['address']['address_line']
         current_item['items_available'] = store['items_available']
         if current_item['items_available'] == 0:
             result.append(current_item)
@@ -173,8 +180,8 @@ def parse_tgtg_api(api_result):
                 store_timezone = None
             localPickupStart = datetime.datetime.strptime(store['pickup_interval']['start'],'%Y-%m-%dT%H:%M:%S%z').replace(tzinfo=datetime.timezone.utc).astimezone(tz=store_timezone)
             localPickupEnd = datetime.datetime.strptime(store['pickup_interval']['end'],'%Y-%m-%dT%H:%M:%S%z').replace(tzinfo=datetime.timezone.utc).astimezone(tz=store_timezone)
-            current_item['pickup_start'] = maya.parse(localPickupStart).slang_date().capitalize() + " " + localPickupStart.strftime('%H:%M')
-            current_item['pickup_end'] = maya.parse(localPickupEnd).slang_date().capitalize() + " " + localPickupEnd.strftime('%H:%M')
+            current_item['pickup_start'] = maya.parse(localPickupStart).slang_date("de").capitalize() + " " + localPickupStart.strftime('%H:%M')
+            current_item['pickup_end'] = maya.parse(localPickupEnd).slang_date("de").capitalize() + " " + localPickupEnd.strftime('%H:%M')
         except KeyError:
             #print(KeyError)
             current_item['pickup_start'] = None
@@ -191,12 +198,13 @@ def toogoodtogo():
     Retrieves the data from tgtg API and selects the message to send.
     """
 
-    # Get the global variable of items in stock
+    # Get the global variable of items in stock and tgtg_fav_only
     global tgtg_in_stock
+    global tgtg_fav_only
 
     # Get all favorite items
     api_response = tgtg_client.get_items(
-        favorites_only=False,
+        favorites_only=tgtg_fav_only,
         latitude=config['location']['lat'],
         longitude=config['location']['long'],
         radius=config['location']['range'],
@@ -226,7 +234,7 @@ def toogoodtogo():
         if new_stock != old_stock:
             # Check if the stock was replenished, send an encouraging image message
             if old_stock == 0 and new_stock > 0:
-                message = f"🍽 There are {new_stock} new goodie bags at [{item['store_name']}](https://share.toogoodtogo.com/item/{item['id']})\n"\
+                message = f"🍽 Es gibt {new_stock} neue Überaschungstüte(n) bei [{item['store_name']}](https://share.toogoodtogo.com/item/{item['id']}) in {item['store_address']}\n"\
                 f"_{item['description']}_\n"\
                 f"💰 *{item['price_including_taxes']}*/{item['value_including_taxes']}\n"
                 if 'rating' in item:
