@@ -9,11 +9,6 @@
         "range": 30
     },
     "tgtg": {
-        "enabled": true,
-        "email": "<your-tgtg-email>",
         "favorites_only": false
-    },
-    "foodsi": {
-        "enabled": false
     }
 }
