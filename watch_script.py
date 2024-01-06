@@ -158,8 +158,8 @@ def parse_tgtg_api(api_result):
             continue
         current_item['description'] = store['item']['description']
         current_item['category_picture'] = store['item']['cover_picture']['current_url']
-        current_item['price_including_taxes'] = str(store['item']['item_price']['minor_units'])[:-(store['item']['item_price']['decimals'])] + "." + str(store['item']['item_price']['minor_units'])[-(store['item']['item_price']['decimals']):]+store['item']['item_price']['code']
-        current_item['value_including_taxes'] = str(store['item']['item_value']['minor_units'])[:-(store['item']['item_value']['decimals'])] + "." + str(store['item']['item_value']['minor_units'])[-(store['item']['item_value']['decimals']):]+store['item']['item_value']['code']
+        current_item['item_price'] = str(store['item']['item_price']['minor_units'])[:-(store['item']['item_price']['decimals'])] + "." + str(store['item']['item_price']['minor_units'])[-(store['item']['item_price']['decimals']):]+store['item']['item_price']['code']
+        current_item['item_value'] = str(store['item']['item_value']['minor_units'])[:-(store['item']['item_value']['decimals'])] + "." + str(store['item']['item_value']['minor_units'])[-(store['item']['item_value']['decimals']):]+store['item']['item_value']['code']
         try:
             try:
                 store_timezone = pytz.timezone(store['store']['store_time_zone'])
@@ -223,7 +223,7 @@ def toogoodtogo():
             if old_stock == 0 and new_stock > 0:
                 message = f"🍽 Es gibt {new_stock} neue Überaschungstüte(n) bei [{item['store_name']}](https://share.toogoodtogo.com/item/{item['id']}) in {item['store_address']}\n"\
                 f"_{item['description']}_\n"\
-                f"💰 *{item['price_including_taxes']}*/{item['value_including_taxes']}\n"
+                f"💰 *{item['item_price']}*/{item['item_value']}\n"
                 if 'rating' in item:
                     message += f"⭐️ {item['rating']}/5\n"
                 if 'pickup_start' and 'pickup_end' in item:
