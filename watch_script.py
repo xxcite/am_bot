@@ -158,8 +158,8 @@ def parse_tgtg_api(api_result):
             continue
         current_item['description'] = store['item']['description']
         current_item['category_picture'] = store['item']['cover_picture']['current_url']
-        current_item['price_including_taxes'] = str(store['item']['price_including_taxes']['minor_units'])[:-(store['item']['price_including_taxes']['decimals'])] + "." + str(store['item']['price_including_taxes']['minor_units'])[-(store['item']['price_including_taxes']['decimals']):]+store['item']['price_including_taxes']['code']
-        current_item['value_including_taxes'] = str(store['item']['value_including_taxes']['minor_units'])[:-(store['item']['value_including_taxes']['decimals'])] + "." + str(store['item']['value_including_taxes']['minor_units'])[-(store['item']['value_including_taxes']['decimals']):]+store['item']['value_including_taxes']['code']
+        current_item['price_including_taxes'] = str(store['item']['item_price']['minor_units'])[:-(store['item']['item_price']['decimals'])] + "." + str(store['item']['item_price']['minor_units'])[-(store['item']['item_price']['decimals']):]+store['item']['item_price']['code']
+        current_item['value_including_taxes'] = str(store['item']['item_value']['minor_units'])[:-(store['item']['item_value']['decimals'])] + "." + str(store['item']['item_value']['minor_units'])[-(store['item']['item_value']['decimals']):]+store['item']['item_value']['code']
         try:
             try:
                 store_timezone = pytz.timezone(store['store']['store_time_zone'])
