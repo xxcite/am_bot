@@ -41,7 +41,7 @@ except:
 
 try:
     # Create the tgtg client with my credentials
-    tgtg_client = TgtgClient(access_token=config['tgtg']['credentials']['access_token'], refresh_token=config['tgtg']['credentials']['refresh_token'], user_id=config['tgtg']['credentials']['user_id'], cookie=config['tgtg']['credentials']['cookie'])
+    tgtg_client = TgtgClient(access_token=config['tgtg']['credentials']['access_token'], refresh_token=config['tgtg']['credentials']['refresh_token'], cookie=config['tgtg']['credentials']['cookie'])
 except KeyError:
     # print(f"Failed to obtain TGTG credentials.\nRun \"python3 {sys.argv[0]} <your_email>\" to generate TGTG credentials.")
     # exit(1)
@@ -57,7 +57,7 @@ except KeyError:
         f.seek(0)
         json.dump(config, f, indent = 4)
         f.truncate()
-        tgtg_client = TgtgClient(access_token=config['tgtg']['credentials']['access_token'], refresh_token=config['tgtg']['credentials']['refresh_token'], user_id=config['tgtg']['credentials']['user_id'], cookie=config['tgtg']['credentials']['cookie'])
+        tgtg_client = TgtgClient(access_token=config['tgtg']['credentials']['access_token'], refresh_token=config['tgtg']['credentials']['refresh_token'], cookie=config['tgtg']['credentials']['cookie'])
     except:
         print(traceback.format_exc())
         exit(1)
